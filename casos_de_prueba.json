@@ -1,0 +1,370 @@
+{
+  "suite": "Podcastify_Test_Cases",
+  "version": "1.0",
+  "source": "PILOTO_SEMANAL_A_IMPLEMENTAR.pdf",
+  "test_cases": [
+    {
+      "id": "TC-RF1-01",
+      "requirement_id": "RF-1",
+      "title": "Carga correcta de CSV válido",
+      "input_config": {
+        "csv_has_expected_columns": true,
+        "rows": 10,
+        "sample_row": {
+          "method": "GET",
+          "status": 200,
+          "user_agent": "Mozilla/5.0",
+          "uri_episode": "/podcast/ep1.mp3",
+          "bytes": 12345
+        }
+      },
+      "expected_result": {
+        "raw_records_persisted": 10,
+        "errors": []
+      }
+    },
+    {
+      "id": "TC-RF1-02",
+      "requirement_id": "RF-1",
+      "title": "Manejo de CSV con columnas faltantes",
+      "input_config": {
+        "csv_has_expected_columns": false,
+        "missing_columns": ["bytes"],
+        "rows": 5
+      },
+      "expected_result": {
+        "raw_records_persisted": 0,
+        "errors": [
+          {
+            "type": "schema_error",
+            "message_contains": "bytes"
+          }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF2-01",
+      "requirement_id": "RF-2",
+      "title": "Acepta método GET",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_method": true },
+        "generated_observations": []
+      }
+    },
+    {
+      "id": "TC-RF2-02",
+      "requirement_id": "RF-2",
+      "title": "Rechaza método distinto de GET y genera observación de error",
+      "input_config": {
+        "request": { "method": "POST", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_method": false },
+        "generated_observations": [
+          {
+            "metric": "Bad method",
+            "value": 1,
+            "uri_episode": "/a.mp3"
+          }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF3-01",
+      "requirement_id": "RF-3",
+      "title": "Acepta status 200",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_status": true },
+        "generated_observations": []
+      }
+    },
+    {
+      "id": "TC-RF3-02",
+      "requirement_id": "RF-3",
+      "title": "Acepta status 206",
+      "input_config": {
+        "request": { "method": "GET", "status": 206, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_status": true },
+        "generated_observations": []
+      }
+    },
+    {
+      "id": "TC-RF3-03",
+      "requirement_id": "RF-3",
+      "title": "Rechaza status distinto de 200/206 y genera observación de error",
+      "input_config": {
+        "request": { "method": "GET", "status": 404, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_status": false },
+        "generated_observations": [
+          { "metric": "Bad status", "value": 1, "uri_episode": "/a.mp3" }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF4-01",
+      "requirement_id": "RF-4",
+      "title": "Detecta bot por user_agent (BOT)",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "SOME BOT CRAWLER", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_bot": true },
+        "generated_observations": [
+          { "metric": "Bot detected", "value": 1, "uri_episode": "/a.mp3" }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF4-02",
+      "requirement_id": "RF-4",
+      "title": "No detecta bot con user_agent normal",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_bot": false },
+        "generated_observations": []
+      }
+    },
+    {
+      "id": "TC-RF5-01",
+      "requirement_id": "RF-5",
+      "title": "Acepta recurso .mp3",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/pod/ep.mp3", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_resource_format": true },
+        "generated_observations": []
+      }
+    },
+    {
+      "id": "TC-RF5-02",
+      "requirement_id": "RF-5",
+      "title": "Rechaza recurso no .mp3 y genera observación de error",
+      "input_config": {
+        "request": { "method": "GET", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/pod/ep.mp4", "bytes": 1000 }
+      },
+      "expected_result": {
+        "validation": { "is_valid_resource_format": false },
+        "generated_observations": [
+          { "metric": "Bad format resource", "value": 1, "uri_episode": "/pod/ep.mp4" }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF6-01",
+      "requirement_id": "RF-6",
+      "title": "Cada solicitud inválida genera una observación de error con campos mínimos",
+      "input_config": {
+        "invalid_requests": [
+          { "method": "POST", "status": 200, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 },
+          { "method": "GET", "status": 500, "user_agent": "Mozilla/5.0", "uri_episode": "/a.mp3", "bytes": 1000 }
+        ]
+      },
+      "expected_result": {
+        "generated_observations_count": 2,
+        "each_observation_has_fields": ["id", "metric", "value", "uri_episode"],
+        "all_values_are_one": true
+      }
+    },
+    {
+      "id": "TC-RF7-01",
+      "requirement_id": "RF-7",
+      "title": "Genera Download 206 al superar 1048576 bytes acumulados",
+      "input_config": {
+        "group_key": { "user": "u1", "user_agent": "UA1", "uri_episode": "/ep1.mp3" },
+        "requests": [
+          { "method": "GET", "status": 206, "user_agent": "UA1", "uri_episode": "/ep1.mp3", "bytes": 600000 },
+          { "method": "GET", "status": 206, "user_agent": "UA1", "uri_episode": "/ep1.mp3", "bytes": 500000 }
+        ]
+      },
+      "expected_result": {
+        "generated_observations": [
+          { "metric": "Download 206", "value": 1, "uri_episode": "/ep1.mp3" }
+        ],
+        "downloads_generated": 1
+      }
+    },
+    {
+      "id": "TC-RF7-02",
+      "requirement_id": "RF-7",
+      "title": "Descarta solicitudes posteriores tras generar una observación de descarga",
+      "input_config": {
+        "group_key": { "user": "u1", "user_agent": "UA1", "uri_episode": "/ep1.mp3" },
+        "requests": [
+          { "method": "GET", "status": 206, "user_agent": "UA1", "uri_episode": "/ep1.mp3", "bytes": 800000 },
+          { "method": "GET", "status": 206, "user_agent": "UA1", "uri_episode": "/ep1.mp3", "bytes": 400000 },
+          { "method": "GET", "status": 206, "user_agent": "UA1", "uri_episode": "/ep1.mp3", "bytes": 1234 }
+        ]
+      },
+      "expected_result": {
+        "generated_observations": [
+          { "metric": "Download 206", "value": 1, "uri_episode": "/ep1.mp3" }
+        ],
+        "post_download_requests_processed": 0
+      }
+    },
+    {
+      "id": "TC-RF7-03",
+      "requirement_id": "RF-7",
+      "title": "Asigna localización (lat/long) a usuario único en observaciones",
+      "input_config": {
+        "unique_user": "u99",
+        "generated_observation_requires_location": true
+      },
+      "expected_result": {
+        "observation_contains_fields": ["latitude", "longitude"],
+        "latitude_range": [-90, 90],
+        "longitude_range": [-180, 180]
+      }
+    },
+    {
+      "id": "TC-RF8-01",
+      "requirement_id": "RF-8",
+      "title": "Estadísticas del proceso: conteo por métrica",
+      "input_config": {
+        "observations": [
+          { "metric": "Download 200", "value": 1 },
+          { "metric": "Download 206", "value": 1 },
+          { "metric": "Bad method", "value": 1 },
+          { "metric": "Bad status", "value": 1 },
+          { "metric": "Bad format resource", "value": 1 },
+          { "metric": "Bot detected", "value": 1 }
+        ]
+      },
+      "expected_result": {
+        "stats": {
+          "Download 200": 1,
+          "Download 206": 1,
+          "Bad method": 1,
+          "Bad status": 1,
+          "Bad format resource": 1,
+          "Bot detected": 1
+        }
+      }
+    },
+    {
+      "id": "TC-RF9-01",
+      "requirement_id": "RF-9",
+      "title": "Top-k podcasts ordenado de mayor a menor por número de descargas",
+      "input_config": {
+        "k": 3,
+        "downloads_per_podcast": [
+          { "podcast_title": "A", "downloads": 10 },
+          { "podcast_title": "B", "downloads": 25 },
+          { "podcast_title": "C", "downloads": 15 },
+          { "podcast_title": "D", "downloads": 5 }
+        ]
+      },
+      "expected_result": {
+        "top_k": [
+          { "podcast_title": "B", "downloads": 25 },
+          { "podcast_title": "C", "downloads": 15 },
+          { "podcast_title": "A", "downloads": 10 }
+        ]
+      }
+    },
+    {
+      "id": "TC-RF9-02",
+      "requirement_id": "RF-9",
+      "title": "Top-k con k=0 devuelve lista vacía",
+      "input_config": { "k": 0, "downloads_per_podcast": [{ "podcast_title": "A", "downloads": 10 }] },
+      "expected_result": { "top_k": [] }
+    },
+    {
+      "id": "TC-RF10-01",
+      "requirement_id": "RF-10",
+      "title": "Genera gráfico de columnas para top-k",
+      "input_config": {
+        "k": 5,
+        "top_k": [
+          { "podcast_title": "A", "downloads": 10 },
+          { "podcast_title": "B", "downloads": 8 }
+        ]
+      },
+      "expected_result": {
+        "chart_type": "bar",
+        "rendered": true,
+        "num_bars": 2,
+        "x_labels_match_podcast_title": true
+      }
+    },
+    {
+      "id": "TC-RF11-01",
+      "requirement_id": "RF-11",
+      "title": "Recomendación devuelve k episodios ordenados por descargas dentro de temas del usuario",
+      "input_config": {
+        "k": 2,
+        "user_topics": ["tech", "music"],
+        "episodes": [
+          { "episode_id": "e1", "topic": "tech", "downloads": 100 },
+          { "episode_id": "e2", "topic": "sports", "downloads": 999 },
+          { "episode_id": "e3", "topic": "music", "downloads": 50 }
+        ]
+      },
+      "expected_result": {
+        "recommended_episode_ids": ["e1", "e3"]
+      }
+    },
+    {
+      "id": "TC-RFN1-01",
+      "requirement_id": "RFN-1",
+      "title": "OpenAPI disponible y expone endpoints CRUD",
+      "input_config": { "openapi_endpoint": "/openapi.json" },
+      "expected_result": {
+        "http_status": 200,
+        "contains_paths": ["pods", "episodes", "metrics", "observations"]
+      }
+    },
+    {
+      "id": "TC-RFN1-02",
+      "requirement_id": "RFN-1",
+      "title": "CRUD Podcast funciona (creación y lectura)",
+      "input_config": {
+        "create": { "title": "Podcast X", "author": "Alice" },
+        "read_expected_title": "Podcast X"
+      },
+      "expected_result": {
+        "create_http_status": 201,
+        "read_http_status": 200,
+        "read_contains": { "title": "Podcast X" }
+      }
+    },
+    {
+      "id": "TC-RFN1-03",
+      "requirement_id": "RFN-1",
+      "title": "Endpoint de recomendación responde correctamente",
+      "input_config": { "user_id": "u1", "k": 5 },
+      "expected_result": {
+        "http_status": 200,
+        "response_is_list": true,
+        "max_items": 5
+      }
+    },
+    {
+      "id": "TC-RFN2-01",
+      "requirement_id": "RFN-2",
+      "title": "Acceso sin credenciales a la API es denegado",
+      "input_config": { "request_has_auth": false, "endpoint": "/pods" },
+      "expected_result": { "http_status_in": [401, 403] }
+    },
+    {
+      "id": "TC-RFN2-02",
+      "requirement_id": "RFN-2",
+      "title": "Acceso con credenciales a la API es permitido",
+      "input_config": { "request_has_auth": true, "endpoint": "/pods" },
+      "expected_result": { "http_status": 200 }
+    }
+  ]
+}
